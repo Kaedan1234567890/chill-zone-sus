@@ -1,5 +1,7 @@
 package com.chillzone.sus.ui;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 import com.chillzone.sus.data.SusRecord;
 import com.chillzone.sus.data.SusStore;
 import com.chillzone.sus.permission.Permissions;
@@ -60,7 +62,7 @@ public final class SusMenu extends AbstractContainerMenu {
     }
 
     private void build() {
-        ItemStack filler = named(new ItemStack(Items.GRAY_STAINED_GLASS_PANE), Component.literal(" "));
+        ItemStack filler = named(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("minecraft:gray_stained_glass_pane"))), Component.literal(" "));
         for (int i = 0; i < SIZE; i++) container.setItem(i, filler.copy());
 
         if (focused != null) {
@@ -100,7 +102,7 @@ public final class SusMenu extends AbstractContainerMenu {
         }
 
         if (playerSlots.isEmpty()) {
-            ItemStack good = named(new ItemStack(Items.LIME_DYE), Component.literal("No active SUS flags"));
+            ItemStack good = named(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("minecraft:lime_dye"))), Component.literal("No active SUS flags"));
             good.set(DataComponents.LORE, new ItemLore(List.of(
                 Component.literal("Nobody currently has an active suspicion score.")
             )));
@@ -180,7 +182,7 @@ public final class SusMenu extends AbstractContainerMenu {
                 return;
             }
             viewer.teleportTo(
-                target.serverLevel(),
+                target.level(),
                 target.getX(), target.getY(), target.getZ(),
                 java.util.Set.of(),
                 target.getYRot(), target.getXRot(),
