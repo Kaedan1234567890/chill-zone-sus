@@ -13,6 +13,11 @@ public final class SusRecord {
     public long cleanActiveTicks;
     public long totalActiveTicks;
     public List<Long> recentFlagTimes = new ArrayList<>();
+    // Rolling ore activity is transient: it resets naturally as events age out.
+    public transient int diamondActivity10m;
+    public transient int debrisActivity10m;
+    public transient int diamondVeins10m;
+    public transient int debrisVeins10m;
 
     public SusRecord() {}
 

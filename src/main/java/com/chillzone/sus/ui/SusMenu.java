@@ -92,6 +92,10 @@ public final class SusMenu extends AbstractContainerMenu {
                 Component.literal("Recent Flags: " + r.recentFlags(now)),
                 Component.literal("Last Flag: " + timeAgo(r.lastFlagEpochMs)),
                 Component.literal("Status: " + r.status()),
+                Component.literal(""),
+                Component.literal("Ore Activity (last 10m):"),
+                Component.literal("Diamonds: " + r.diamondActivity10m + " (" + r.diamondVeins10m + " veins)"),
+                Component.literal("Ancient Debris: " + r.debrisActivity10m + " (" + r.debrisVeins10m + " veins)"),
                 Component.literal("Clean Period: " + cleanPeriod(r.cleanActiveTicks)),
                 Component.literal(""),
                 Component.literal("Click to investigate")
@@ -129,6 +133,10 @@ public final class SusMenu extends AbstractContainerMenu {
                 Component.literal("Recent Flags: " + r.recentFlags(System.currentTimeMillis())),
                 Component.literal("Last Flag: " + timeAgo(r.lastFlagEpochMs)),
                 Component.literal("Status: " + r.status()),
+                Component.literal(""),
+                Component.literal("Ore Activity (last 10m):"),
+                Component.literal("Diamonds: " + r.diamondActivity10m + " (" + r.diamondVeins10m + " veins)"),
+                Component.literal("Ancient Debris: " + r.debrisActivity10m + " (" + r.debrisVeins10m + " veins)"),
                 Component.literal("Clean Period: " + cleanPeriod(r.cleanActiveTicks)),
                 Component.literal("Archived Points: " + r.archivedFlags)
             )));

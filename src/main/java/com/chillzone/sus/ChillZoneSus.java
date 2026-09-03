@@ -29,6 +29,7 @@ public final class ChillZoneSus implements ModInitializer {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             if (store != null) {
                 store.tick(server);
+                if (server.getTickCount() % 20 == 0) SusDetector.refreshAll(System.currentTimeMillis());
             }
         });
 

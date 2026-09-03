@@ -54,3 +54,13 @@ The old active score is moved into archive history and no longer affects the cur
 
 Data is stored in:
 `config/chill_zone_sus.json`
+
+
+## 0.2.0 ore activity update
+- Rolling 10-minute Diamond and Ancient Debris activity counters.
+- Nearby ore blocks broken within 45 seconds are grouped into one approximate vein/find.
+- Normal single veins no longer directly raise suspicion.
+- Diamond thresholds: 20+ blocks across 4+ veins = +1; 30+ across 6+ veins = +2 additional tier.
+- Ancient Debris thresholds: 7+ across 4+ veins = +1; 12+ across 6+ veins = +2 additional tier.
+- Counters appear in the SUS hover/details and age out automatically.
+- Detection remains an investigation signal only; no automatic punishment.
