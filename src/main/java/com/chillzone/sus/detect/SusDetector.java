@@ -3,7 +3,7 @@ package com.chillzone.sus.detect;
 import com.chillzone.sus.data.SusStore;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -47,7 +47,7 @@ public final class SusDetector {
     }
 
     private static boolean isInterestingOre(BlockState state) {
-        ResourceLocation id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         if (id == null) return false;
         String path = id.getPath();
 
