@@ -1,66 +1,13 @@
-# Chill Zone SUS 0.1.0-alpha
+# Chill Zone SUS 0.3.0-alpha
+Minecraft 26.2 Fabric moderation investigation GUI.
 
-Private staff-side suspicion tracker for Chill Zone SMP.
+## 0.3.0 changes
+- Diamond and Ancient Debris are separate persistent SUS cases.
+- If one player triggers both, `/sus` shows two player heads.
+- Each head has its own Suspicion Score, Status, Active Flags and Last Flag.
+- Each case shows ore mined, separate veins, average time between veins, fastest interval, and five recent vein timings.
+- Cases do NOT auto-clear. Owner/Admin must clear them.
+- Clearing from a case screen clears only that ore category; `/susclear <player>` clears both.
+- SUS is an investigation signal, not automatic proof or punishment.
 
-## Commands
-- `/sus` — opens the suspicious-player GUI, sorted by score.
-- `/sus <player>` — opens that player's investigation page.
-- `/susclear <player>` — clears active flags and archives the old score.
-
-## LuckPerms permissions
-- `chillzonesus.command.sus`
-- `chillzonesus.teleport`
-- `chillzonesus.spectate`
-- `chillzonesus.clear`
-
-Suggested:
-```text
-/lp group owner permission set chillzonesus.command.sus true
-/lp group owner permission set chillzonesus.teleport true
-/lp group owner permission set chillzonesus.spectate true
-/lp group owner permission set chillzonesus.clear true
-
-/lp group admin permission set chillzonesus.command.sus true
-/lp group admin permission set chillzonesus.teleport true
-/lp group admin permission set chillzonesus.spectate true
-/lp group admin permission set chillzonesus.clear false
-
-/lp group mod permission set chillzonesus.command.sus true
-/lp group mod permission set chillzonesus.teleport true
-/lp group mod permission set chillzonesus.spectate true
-/lp group mod permission set chillzonesus.clear false
-
-/lp group member permission set chillzonesus.command.sus false
-/lp group member permission set chillzonesus.teleport false
-/lp group member permission set chillzonesus.spectate false
-/lp group member permission set chillzonesus.clear false
-```
-
-## Alpha detector
-The first detector is intentionally conservative:
-- Watches diamond ore, deepslate diamond ore, and ancient debris.
-- Ignores the first few finds in an 8-minute window.
-- Repeated finds begin adding quiet suspicion points.
-- No player receives a warning.
-- No automatic punishment happens.
-
-This is only a first-pass signal. It is designed to give staff a reason to investigate,
-not proof that someone is cheating.
-
-## Clean reset
-Active flags reset only after 90 days of actual clean online play.
-Being offline does not advance the clean timer.
-The old active score is moved into archive history and no longer affects the current score.
-
-Data is stored in:
-`config/chill_zone_sus.json`
-
-
-## 0.2.0 ore activity update
-- Rolling 10-minute Diamond and Ancient Debris activity counters.
-- Nearby ore blocks broken within 45 seconds are grouped into one approximate vein/find.
-- Normal single veins no longer directly raise suspicion.
-- Diamond thresholds: 20+ blocks across 4+ veins = +1; 30+ across 6+ veins = +2 additional tier.
-- Ancient Debris thresholds: 7+ across 4+ veins = +1; 12+ across 6+ veins = +2 additional tier.
-- Counters appear in the SUS hover/details and age out automatically.
-- Detection remains an investigation signal only; no automatic punishment.
+Existing `config/chill_zone_sus.json` is loaded and preserved; new category data is added alongside legacy fields.
