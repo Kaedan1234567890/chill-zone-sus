@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "chill_zone_sus",
+  "version": "${version}",
+  "name": "Chill Zone SUS",
+  "description": "Private staff-side suspicion flags and /sus GUI for Chill Zone SMP.",
+  "authors": ["Chill Zone SMP"],
+  "environment": "server",
+  "entrypoints": {
+    "main": ["com.chillzone.sus.ChillZoneSus"]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "26.2",
+    "fabric-api": "*",
+    "luckperms": "*"
+  }
+}
