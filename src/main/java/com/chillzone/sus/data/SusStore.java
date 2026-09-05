@@ -48,6 +48,11 @@ public final class SusStore {
         SusRecord r=getOrCreate(p.getUUID(),p.getGameProfile().name()); SusRecord.OreCase c=r.ore(type); long now=System.currentTimeMillis();
         if (c.suspicionScore < minimum) { c.suspicionScore=minimum; c.activeFlags++; c.lastFlagEpochMs=now; }
     }
+    public void setScore(ServerPlayer p, String type, int score) {
+        SusRecord r=getOrCreate(p.getUUID(),p.getGameProfile().name()); SusRecord.OreCase c=r.ore(type);
+        int old=c.suspicionScore; c.suspicionScore=Math.max(0,score);
+        if (c.suspicionScore > old) { c.activeFlags++; c.lastFlagEpochMs=System.currentTimeMillis(); }
+    }
     public void clearActive(UUID uuid, String name) {
         SusRecord r=getOrCreate(uuid,name); clearCase(r.diamond); clearCase(r.debris);
         r.suspicionScore=0; r.lastFlagEpochMs=0; r.cleanActiveTicks=0; r.recentFlagTimes.clear();
@@ -56,6 +61,8 @@ public final class SusStore {
     private static void clearCase(SusRecord.OreCase c) {
         c.archivedPoints += Math.max(0,c.suspicionScore); c.suspicionScore=0; c.activeFlags=0; c.lastFlagEpochMs=0;
         c.oreMined=0; c.separateVeins=0; c.veinTimes.clear(); c.recentIntervalsMs.clear(); c.lastVeinEpochMs=0; c.currentVeinId=0; c.currentVeinLastBreakMs=0;
+        c.blocksSinceLastVein=0; c.totalBlocksBetweenVeins=0; c.blockGapSamples=0; c.lowBlockGapVeins=0; c.veryLowBlockGapVeins=0;
+        c.fastVeins=0; c.caveExposedVeins=0; c.tunnelLikeVeins=0; c.unusualOreEvents=0;
     }
     public void tick(MinecraftServer server) {
         for (ServerPlayer p:server.getPlayerList().getPlayers()) getOrCreate(p.getUUID(),p.getGameProfile().name()).totalActiveTicks++;

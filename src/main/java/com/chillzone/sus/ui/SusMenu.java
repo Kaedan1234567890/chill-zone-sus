@@ -87,31 +87,50 @@ public final class SusMenu extends AbstractContainerMenu {
             ItemStack head=new ItemStack(Items.PLAYER_HEAD);
             String label=e.r.lastKnownName + ("diamond".equals(e.type) ? " - Diamond Activity" : " - Ancient Debris Activity");
             head.set(DataComponents.CUSTOM_NAME,Component.literal(label));
-            head.set(DataComponents.LORE,new ItemLore(caseLore(e.c,e.type,true)));
+            head.set(DataComponents.LORE,new ItemLore(caseLore(e.r,e.c,e.type,true)));
             container.setItem(slot,head); playerSlots.put(slot,new CaseKey(e.r.uuid,e.type)); slot++;
         }
         if(playerSlots.isEmpty()){ ItemStack good=named(new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.parse("minecraft:lime_dye"))),Component.literal("No active SUS flags")); container.setItem(22,good); }
         ItemStack info=named(new ItemStack(Items.BOOK),Component.literal("How SUS works"));
-        info.set(DataComponents.LORE,new ItemLore(List.of(Component.literal("Diamond and debris cases are separate."),Component.literal("Cases stay until Owner/Admin clears them."),Component.literal("SUS is an investigation signal, not proof.")))); container.setItem(49,info);
+        info.set(DataComponents.LORE,new ItemLore(List.of(Component.literal("Diamond and debris cases are separate."),Component.literal("Scores use behaviour: mining support, timing,"),Component.literal("cave exposure, tunnel patterns and unusual finds."),Component.literal("High ore totals alone do not create a high score."),Component.literal("SUS is an investigation signal, not proof.")))); container.setItem(49,info);
     }
 
     private void buildFocused() {
         SusRecord r=store.get(focused); String name=r==null?"Unknown Player":r.lastKnownName; SusRecord.OreCase c=r==null?null:r.ore(focusedType);
         ItemStack head=named(new ItemStack(Items.PLAYER_HEAD),Component.literal(name + ("debris".equals(focusedType)?" - Ancient Debris":" - Diamonds")));
-        if(c!=null)head.set(DataComponents.LORE,new ItemLore(caseLore(c,focusedType,false))); container.setItem(13,head);
+        if(c!=null)head.set(DataComponents.LORE,new ItemLore(caseLore(r,c,focusedType,false))); container.setItem(13,head);
         if(Permissions.has(viewer,Permissions.TELEPORT))container.setItem(29,named(new ItemStack(Items.ENDER_PEARL),Component.literal("Teleport to Player")));
         if(Permissions.has(viewer,Permissions.SPECTATE))container.setItem(31,named(new ItemStack(Items.ENDER_EYE),Component.literal("Spectate Player")));
         if(Permissions.has(viewer,Permissions.CLEAR)){ ItemStack clear=named(new ItemStack(Items.BUCKET),Component.literal("Clear This SUS Case")); clear.set(DataComponents.LORE,new ItemLore(List.of(Component.literal("Clears only this ore category.")))); container.setItem(33,clear); }
         container.setItem(49,named(new ItemStack(Items.ARROW),Component.literal("Back")));
     }
 
-    private static List<Component> caseLore(SusRecord.OreCase c,String type,boolean click){
+    private static List<Component> caseLore(SusRecord r,SusRecord.OreCase c,String type,boolean click){
         List<Component> lore=new ArrayList<>();
-        lore.add(Component.literal("Suspicion Score: "+c.suspicionScore)); lore.add(Component.literal("Status: "+c.status())); lore.add(Component.literal("Active Flags: "+c.activeFlags)); lore.add(Component.literal("Last Flag: "+timeAgo(c.lastFlagEpochMs))); lore.add(Component.literal(""));
-        boolean d="diamond".equals(type); lore.add(Component.literal(d?"DIAMOND ACTIVITY":"ANCIENT DEBRIS ACTIVITY")); lore.add(Component.literal((d?"Diamond Ore Mined: ":"Ancient Debris Mined: ")+c.oreMined)); lore.add(Component.literal("Separate Veins: "+c.separateVeins)); lore.add(Component.literal("Average Time Between Veins: "+duration(c.averageIntervalMs()))); lore.add(Component.literal("Fastest Vein: "+duration(c.fastestIntervalMs()))); lore.add(Component.literal("Recent Vein Timing:"));
-        int from=Math.max(0,c.recentIntervalsMs.size()-5); if(from==c.recentIntervalsMs.size())lore.add(Component.literal("• Not enough veins yet")); else for(int i=c.recentIntervalsMs.size()-1;i>=from;i--)lore.add(Component.literal("• "+duration(c.recentIntervalsMs.get(i))));
-        if(click){lore.add(Component.literal(""));lore.add(Component.literal("Click to investigate"));} return lore;
+        lore.add(Component.literal("Suspicion Score: "+c.suspicionScore));
+        lore.add(Component.literal("Status: "+c.status()));
+        lore.add(Component.literal("Active Flags: "+c.activeFlags));
+        lore.add(Component.literal("Last Flag: "+timeAgo(c.lastFlagEpochMs)));
+        lore.add(Component.literal(""));
+        boolean d="diamond".equals(type);
+        lore.add(Component.literal(d?"DIAMOND ACTIVITY":"ANCIENT DEBRIS ACTIVITY"));
+        lore.add(Component.literal((d?"Diamond Ore Mined: ":"Ancient Debris Mined: ")+c.oreMined));
+        lore.add(Component.literal("Separate Veins: "+c.separateVeins));
+        lore.add(Component.literal("Ore per Vein: "+String.format(java.util.Locale.ROOT,"%.1f",c.orePerVein())));
+        lore.add(Component.literal("Total Blocks Broken: "+r.totalBlocksBroken));
+        lore.add(Component.literal("Avg Blocks Between Veins: "+blocks(c.averageBlocksBetweenVeins())));
+        lore.add(Component.literal("Average Time Between Veins: "+duration(c.averageIntervalMs())));
+        lore.add(Component.literal("Fastest Vein: "+duration(c.fastestIntervalMs())));
+        lore.add(Component.literal("Cave-Exposed Veins: "+c.caveExposedVeins+" ("+c.cavePercent()+"%)"));
+        lore.add(Component.literal("Tunnel-Like Veins: "+c.tunnelLikeVeins+" ("+c.tunnelPercent()+"%)"));
+        lore.add(Component.literal("Unusual Ore Events: "+c.unusualOreEvents));
+        lore.add(Component.literal(""));
+        lore.add(Component.literal("Score is based on mining behaviour,"));
+        lore.add(Component.literal("not raw ore totals alone."));
+        if(click){lore.add(Component.literal(""));lore.add(Component.literal("Click to investigate"));}
+        return lore;
     }
+    private static String blocks(double v){ return v<0?"N/A":String.format(java.util.Locale.ROOT,"%.1f",v); }
     private static String duration(long ms){ if(ms<0)return "N/A"; long s=ms/1000; if(s<60)return s+"s"; return (s/60)+"m "+(s%60)+"s"; }
 
     @Override
