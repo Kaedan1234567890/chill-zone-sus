@@ -110,7 +110,7 @@ public final class SusMenu extends AbstractContainerMenu {
         }
 
         if (entries.isEmpty()) {
-            ItemStack good = named(new ItemStack(Items.LIME_DYE), Component.literal("No active SUS flags"));
+            ItemStack good = named(new ItemStack(Items.EMERALD), Component.literal("No active SUS flags"));
             good.set(DataComponents.LORE, new ItemLore(List.of(
                 Component.literal("No active mining/X-ray or movement evidence is recorded.")
             )));

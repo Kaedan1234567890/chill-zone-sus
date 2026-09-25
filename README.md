@@ -47,3 +47,7 @@ Future restarts do NOT clear newly collected evidence.
 The uploaded 0.4.0 source contained the behavior-based mining detector but did not contain live AntiFlight hooks. This update keeps movement activity cards and legacy-compatible movement evidence fields without inventing new automatic punishment/detection. Any movement evidence already written into the record by an integrated/older setup remains informational only.
 
 SUS remains an investigation signal only. It never automatically punishes a player.
+
+## 0.5.2 Minecraft 26.2 compile fix
+- Replaced the unavailable `Items.LIME_DYE` empty-state GUI icon with `Items.EMERALD`.
+- No gameplay behavior changed: one TP per qualifying X-ray/mining event, 18 evidence slots, GUI layout, and the one-time old-evidence reset are unchanged.
