@@ -47,28 +47,37 @@ public final class SusDetector {
             int dx = Integer.compare(pos.getX() - r.lastBreakX, 0);
             int dy = Integer.compare(pos.getY() - r.lastBreakY, 0);
             int dz = Integer.compare(pos.getZ() - r.lastBreakZ, 0);
-            int manhattan = Math.abs(pos.getX() - r.lastBreakX) + Math.abs(pos.getY() - r.lastBreakY) + Math.abs(pos.getZ() - r.lastBreakZ);
+            int manhattan = Math.abs(pos.getX() - r.lastBreakX)
+                + Math.abs(pos.getY() - r.lastBreakY)
+                + Math.abs(pos.getZ() - r.lastBreakZ);
             boolean adjacent = manhattan == 1;
             boolean sameStep = adjacent && dx == r.lastStepX && dy == r.lastStepY && dz == r.lastStepZ;
             if (sameStep) r.straightBreakStreak++;
             else r.straightBreakStreak = adjacent ? 2 : 1;
-            r.lastStepX = dx; r.lastStepY = dy; r.lastStepZ = dz;
+            r.lastStepX = dx;
+            r.lastStepY = dy;
+            r.lastStepZ = dz;
         } else {
             r.straightBreakStreak = 1;
             r.hasLastBreak = true;
         }
         r.maxStraightBreakStreak = Math.max(r.maxStraightBreakStreak, r.straightBreakStreak);
-        r.lastBreakX = pos.getX(); r.lastBreakY = pos.getY(); r.lastBreakZ = pos.getZ();
+        r.lastBreakX = pos.getX();
+        r.lastBreakY = pos.getY();
+        r.lastBreakZ = pos.getZ();
     }
 
     private static void record(ServerPlayer sp, SusRecord r, String type, BlockPos pos, Level level, long now) {
         SusRecord.OreCase c = r.ore(type);
         c.oreMined++;
 
-        boolean same = c.currentVeinLastBreakMs > 0 && now - c.currentVeinLastBreakMs <= SAME_VEIN_MS &&
-            Math.abs(c.currentVeinX - pos.getX()) <= VEIN_DISTANCE &&
-            Math.abs(c.currentVeinY - pos.getY()) <= VEIN_DISTANCE &&
-            Math.abs(c.currentVeinZ - pos.getZ()) <= VEIN_DISTANCE;
+        boolean same = c.currentVeinLastBreakMs > 0
+            && now - c.currentVeinLastBreakMs <= SAME_VEIN_MS
+            && Math.abs(c.currentVeinX - pos.getX()) <= VEIN_DISTANCE
+            && Math.abs(c.currentVeinY - pos.getY()) <= VEIN_DISTANCE
+            && Math.abs(c.currentVeinZ - pos.getZ()) <= VEIN_DISTANCE;
+
+        boolean unusualThisVein = false;
 
         if (!same) {
             c.separateVeins++;
@@ -90,24 +99,50 @@ public final class SusDetector {
             if (caveExposed) c.caveExposedVeins++;
             if (tunnelLike) c.tunnelLikeVeins++;
 
-            // An "unusual" event is deliberately multi-signal. A fast find by itself
-            // or a straight tunnel by itself is not enough.
+            // An unusual event deliberately needs more than one signal. A fast
+            // find by itself or a straight tunnel by itself is not enough.
             boolean lowMiningSupport = c.lastVeinEpochMs > 0 && c.blocksSinceLastVein <= 5;
             boolean fastFind = c.lastVeinEpochMs > 0 && now - c.lastVeinEpochMs <= 75_000L;
-            if ((!caveExposed && lowMiningSupport && fastFind) || (tunnelLike && lowMiningSupport)) {
-                c.unusualOreEvents++;
-            }
+            unusualThisVein = (!caveExposed && lowMiningSupport && fastFind)
+                || (tunnelLike && lowMiningSupport);
+            if (unusualThisVein) c.unusualOreEvents++;
 
             c.blocksSinceLastVein = 0;
             c.lastVeinEpochMs = now;
             c.veinTimes.add(now);
             while (c.veinTimes.size() > 100) c.veinTimes.remove(0);
             c.currentVeinId++;
+
+            // A brand-new vein/event gets a fresh evidence lock. At most one
+            // teleport evidence entry may be created for this vein, no matter
+            // how many ore blocks in it are broken afterward.
+            c.evidenceSavedForCurrentVein = false;
         }
 
         c.currentVeinLastBreakMs = now;
-        c.currentVeinX = pos.getX(); c.currentVeinY = pos.getY(); c.currentVeinZ = pos.getZ();
-        score(sp, r, type, c);
+        c.currentVeinX = pos.getX();
+        c.currentVeinY = pos.getY();
+        c.currentVeinZ = pos.getZ();
+
+        int score = score(sp, r, type, c);
+
+        // Saved teleport locations are ONLY for mining/X-ray evidence.
+        // IMPORTANT: one suspicious vein/event = one TP evidence entry. Once
+        // this vein saves evidence, every later block from the same vein is
+        // ignored for TP creation. A genuinely new vein resets the lock above.
+        // Movement/fly/speed/elytra data never calls this method.
+        if (!c.evidenceSavedForCurrentVein && (score > 0 || unusualThisVein)) {
+            String oreName = "debris".equals(type) ? "Ancient Debris" : "Diamond";
+            String reason = oreName + " mining flag - score " + score;
+            store.addMiningEvidence(
+                sp,
+                type,
+                level.dimension().toString(),
+                pos.getX(), pos.getY(), pos.getZ(),
+                reason
+            );
+            c.evidenceSavedForCurrentVein = true;
+        }
     }
 
     private static boolean isCaveExposed(Level level, BlockPos pos) {
@@ -119,7 +154,7 @@ public final class SusDetector {
         return open >= 2;
     }
 
-    private static void score(ServerPlayer sp, SusRecord r, String type, SusRecord.OreCase c) {
+    private static int score(ServerPlayer sp, SusRecord r, String type, SusRecord.OreCase c) {
         int score = 0;
 
         // Require a meaningful sample before the behaviour score can become high.
@@ -149,12 +184,11 @@ public final class SusDetector {
             else if (c.unusualOreEvents >= 5) score += 4;
             else if (c.unusualOreEvents >= 3) score += 2;
 
-            // Strong cave evidence is a reason to LOWER confidence. This is the key
-            // protection for legitimate long caving sessions with lots of diamonds.
+            // Strong cave evidence lowers confidence, protecting legitimate long
+            // caving sessions with large ore totals.
             if (caveRate >= 0.65 && c.caveExposedVeins >= 6) score -= 5;
             else if (caveRate >= 0.45 && c.caveExposedVeins >= 4) score -= 2;
 
-            // Lots of ordinary mining per vein also lowers confidence.
             if (avgBlocks >= 35 && c.blockGapSamples >= 5) score -= 4;
             else if (avgBlocks >= 22 && c.blockGapSamples >= 5) score -= 2;
         }
@@ -162,6 +196,7 @@ public final class SusDetector {
         // Raw ore totals are intentionally NOT used as suspicion points.
         score = Math.max(0, Math.min(30, score));
         store.setScore(sp, type, score);
+        return score;
     }
 
     private static String oreType(BlockState state) {

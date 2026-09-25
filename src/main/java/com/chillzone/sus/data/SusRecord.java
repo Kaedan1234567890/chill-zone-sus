@@ -31,10 +31,65 @@ public final class SusRecord {
     public OreCase diamond = new OreCase();
     public OreCase debris = new OreCase();
 
+    // Mining/X-ray evidence locations only. Movement flags must never add here.
+    // The detail GUI has exactly 18 slots reserved for these locations.
+    public List<EvidenceLocation> miningEvidence = new ArrayList<>();
+
+    // Compatibility/information fields for the movement activity cards. This SUS
+    // build does not punish from these values and it never saves teleport locations
+    // for them. If an older integrated build already wrote these values, Gson keeps
+    // them when this version loads the same record.
+    public int flyFlags;
+    public int speedFlags;
+    public int elytraFlags;
+    public int flightAttempts;
+    public int blockedFlightAttempts;
+    public boolean successfulFlight;
+    public double lastActualSpeed;
+    public double lastAllowedSpeed;
+    public double lastElytraSpeed;
+    public double lastExpectedElytraSpeed;
+    public float lastPitch;
+    public boolean straightUpFlight;
+    public int rocketsUsed;
+    public int windChargesUsed;
+    public long lastMovementFlagEpochMs;
+
     public SusRecord() {}
     public SusRecord(UUID uuid, String name) { this.uuid = uuid; this.lastKnownName = name; }
 
     public OreCase ore(String type) { return "debris".equals(type) ? debris : diamond; }
+
+    public int highestActiveScore() {
+        return Math.max(Math.max(diamond == null ? 0 : diamond.suspicionScore,
+                                 debris == null ? 0 : debris.suspicionScore),
+                        Math.max(flyFlags, Math.max(speedFlags, elytraFlags)));
+    }
+
+    public boolean hasActiveEvidence() {
+        return highestActiveScore() > 0 || (miningEvidence != null && !miningEvidence.isEmpty());
+    }
+
+    public static final class EvidenceLocation {
+        public String type;
+        public String world;
+        public int x;
+        public int y;
+        public int z;
+        public long epochMs;
+        public String reason;
+
+        public EvidenceLocation() {}
+        public EvidenceLocation(String type, String world, int x, int y, int z, long epochMs, String reason) {
+            this.type = type;
+            this.world = world;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.epochMs = epochMs;
+            this.reason = reason;
+        }
+    }
 
     public static final class OreCase {
         public int suspicionScore;
@@ -50,7 +105,11 @@ public final class SusRecord {
         public long currentVeinLastBreakMs;
         public int currentVeinX, currentVeinY, currentVeinZ;
 
-        // Behaviour-based evidence added in 0.4.0.
+        // Explicit per-vein TP evidence lock. False when a new vein starts;
+        // true after that vein has produced its single saved teleport point.
+        public boolean evidenceSavedForCurrentVein;
+
+        // Behaviour-based evidence.
         public long blocksSinceLastVein;
         public long totalBlocksBetweenVeins;
         public int blockGapSamples;
